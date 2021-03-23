@@ -45,7 +45,7 @@ int matches(char* s1, char* s2, int* lineOffset) {
 }
 
 int main(int argc, char* argv[]) {
-    char* filename = "./hello.txt";
+    char* filename = "./input.txt";
 
     int numtasks, rank;
     MPI_Init(&argc, &argv);
