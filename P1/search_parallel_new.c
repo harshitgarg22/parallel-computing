@@ -198,13 +198,17 @@ int main(int argc, char* argv[]) {
         // printf("For proc %d, word of %s wordLoc is %d and lineLoc is %d\n", rank, qwords[i], wordLoc[i], lineLoc[i]);
     }
     MPI_Barrier(MPI_COMM_WORLD);
-    // if (rank == 1) {
-    //     MPI_Send(wordLoc, qwordcount, MPI_INT, 0, 2, MPI_COMM_WORLD);
-    //     MPI_Send(lineLoc, qwordcount, MPI_INT, 0, 3, MPI_COMM_WORLD);
-    // } else if (rank == 0) {
-    //     MPI_Recv(wordLoc, qwordcount, MPI_INT, 0, 2, MPI_COMM_WORLD, NULL);
-    //     MPI_Recv(lineLoc, qwordcount, MPI_INT, 0, 3, MPI_COMM_WORLD, NULL);
-    // }
+    MPI_Send(wordLoc, qwordcount, MPI_INT, 0, 2, MPI_COMM_WORLD);
+    MPI_Send(lineLoc, qwordcount, MPI_INT, 0, 3, MPI_COMM_WORLD);
+    if (rank == 0) {
+        int lineLocAgg[numtasks][qwordcount];
+        int wordLocAgg[numtasks][qwordcount];
+        for(int i = 0; i < numtasks; i++) {
+            MPI_Recv(wordLocAgg[i], qwordcount, MPI_INT, i, 2, MPI_COMM_WORLD, NULL);
+            MPI_Recv(lineLocAgg[i], qwordcount, MPI_INT, i, 3, MPI_COMM_WORLD, NULL);
+        }
+        
+    }
     if (rank == 0) {
         MPI_Reduce(MPI_IN_PLACE, wordFind, qwordcount, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     } else {
