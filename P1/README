@@ -1,0 +1,6 @@
+To run this program, use these sample commands in terminal when in this directory
+
+`echo "Lorem OR ipsum" | make rerun`
+`echo "Lorem OR hello" | make rerun`
+`echo "Lorem AND hello" | make rerun`
+`echo "Lorem AND ipsum" | make rerun`
