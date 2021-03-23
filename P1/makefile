@@ -1,13 +1,13 @@
 all:
-	mpicc search_parallel_new.c -o search_parallel_new.out
+	mpicc search_parallel.c -o search_parallel.out
 
 run:
-	mpiexec -np 4 --oversubscribe ./search_parallel_new.out 
+	mpiexec -np 4 --oversubscribe ./search_parallel.out 
 
 rerun:
-	mpicc search_parallel_new.c -o search_parallel_new.out
-	mpiexec -np 4 --oversubscribe ./search_parallel_new.out 
+	mpicc search_parallel.c -o search_parallel.out
+	mpiexec -np 4 --oversubscribe ./search_parallel.out 
 
 debug:
-	mpicc search_parallel_new.c -o search_parallel_new.out
-	mpirun -np 2 --oversubscribe --mca orte_base_help_aggregate 0 ./search_parallel_new.out 
+	mpicc search_parallel.c -o search_parallel.out
+	mpirun -np 2 --oversubscribe --mca orte_base_help_aggregate 0 ./search_parallel.out 

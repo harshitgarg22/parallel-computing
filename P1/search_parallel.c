@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
             buf[1] = '\0';
         }
     }
-    MPI_Barrier(MPI_COMM_WORLD);
+    // MPI_Barrier(MPI_COMM_WORLD);
     MPI_Offset final_mark;
     MPI_Offset initial_mark = 0;
     if (rank != numtasks - 1) {
@@ -170,7 +170,7 @@ int main(int argc, char* argv[]) {
         numLinesOffset = 0;
     }
     MPI_Scan(&numLinesOffset, &numLinesOffset, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
+    // MPI_Barrier(MPI_COMM_WORLD);
     // printf("For proc %d, numLinesOffset = %d\n", rank, numLinesOffset);
     int wordFind[qwordcount];
     int lineLoc[qwordcount];
@@ -197,17 +197,16 @@ int main(int argc, char* argv[]) {
         }
         // printf("For proc %d, word of %s wordLoc is %d and lineLoc is %d\n", rank, qwords[i], wordLoc[i], lineLoc[i]);
     }
-    MPI_Barrier(MPI_COMM_WORLD);
+    // MPI_Barrier(MPI_COMM_WORLD);
     MPI_Send(wordLoc, qwordcount, MPI_INT, 0, 2, MPI_COMM_WORLD);
     MPI_Send(lineLoc, qwordcount, MPI_INT, 0, 3, MPI_COMM_WORLD);
+    int lineLocAgg[numtasks][qwordcount];
+    int wordLocAgg[numtasks][qwordcount];
     if (rank == 0) {
-        int lineLocAgg[numtasks][qwordcount];
-        int wordLocAgg[numtasks][qwordcount];
-        for(int i = 0; i < numtasks; i++) {
+        for (int i = 0; i < numtasks; i++) {
             MPI_Recv(wordLocAgg[i], qwordcount, MPI_INT, i, 2, MPI_COMM_WORLD, NULL);
             MPI_Recv(lineLocAgg[i], qwordcount, MPI_INT, i, 3, MPI_COMM_WORLD, NULL);
         }
-        
     }
     if (rank == 0) {
         MPI_Reduce(MPI_IN_PLACE, wordFind, qwordcount, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -217,9 +216,9 @@ int main(int argc, char* argv[]) {
     // MPI_Barrier(MPI_COMM_WORLD);
     if (rank == 0) {
         printf("\n");
-        long long prod = (andor == 1) ? 0 : 1;
+        long long prod = andor;
         for (int i = 0; i < qwordcount; ++i) {
-            printf("WordFind at %d is %d wordLoc is %d and lineLoc is %d.\n", i, wordFind[i], wordLoc[i], lineLoc[i]);
+            // printf("WordFind at %d is %d wordLoc is %d and lineLoc is %d.\n", i, wordFind[i], wordLoc[i], lineLoc[i]);
             if (andor == 1) {
                 prod *= wordFind[i];
             } else {
@@ -229,6 +228,15 @@ int main(int argc, char* argv[]) {
         if (prod == 0) {
             printf("Search query not found.\n");
         } else {
+            printf("Search query was found.\n");
+            for (int i = 0; i < qwordcount; ++i) {
+                for (int j = 0; j < numtasks; ++j) {
+                    if (wordLocAgg[j][i] != 0 && lineLocAgg[j][i] != 0 && wordFind[i] != 0) {
+                        printf("Word %s was found at Line number %d and is the %dth word in that line.\n", qwords[i], lineLocAgg[j][i], wordLocAgg[j][i]);
+                        break;
+                    }
+                }
+            }
         }
     }
     double end = MPI_Wtime();
@@ -237,7 +245,7 @@ int main(int argc, char* argv[]) {
     double total = end - start;
     MPI_Reduce(&total, &total_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     if (rank == 0) {
-        printf("Time elapsed = %lf\n", total_time);
+        printf("Time elapsed = %lfs\n", total_time);
     }
 
     MPI_Finalize();
