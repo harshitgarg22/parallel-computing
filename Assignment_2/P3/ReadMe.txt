@@ -1,6 +1,6 @@
 Compile using
-	nvcc scan_CUDA.c -o scan_CUDA
+	nvcc -o scan_CUDA scan_CUDA.c 
 Run using
 	./scan_CUDA
 
-Rest of the instructions needed are self explantory during code execution.
+The rest of the instructions needed are self explanatory during code execution.
