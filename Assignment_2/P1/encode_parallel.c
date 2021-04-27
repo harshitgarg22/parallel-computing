@@ -282,11 +282,9 @@ void populateCodeTable(SymbolCode codeTable[256], HuffmanNode* root) {
 // FILE ENCODING
 
 void writeBitsToBuffer(uint32_t* buffer, int* offset, uint32_t code, int codeLen) {
-    // printf("Writing %u to %d\n", code, *offset);
     int arrayOffset = *offset / 32;
     int extraOffset = *offset % 32;
-    // printf("Array %d, extra %d\n", arrayOffset, extraOffset);
-    // fflush(stdout);
+    
     if(extraOffset <= 32 - codeLen) {
         // can be written in full to current block
         uint32_t b = code << (32 - codeLen - extraOffset);
@@ -364,10 +362,8 @@ void* encodeBatch(void* arg) {
     if(threadID != 0) {
         pthread_mutex_lock(&outputMutex[threadID - 1]);
         while(outputOffset[threadID - 1] == -1 || outputLength[threadID - 1] == -1) {
-            // printf("Thread %d waiting on %d\n", threadID, threadID - 1);
             pthread_cond_wait(&outputCond[threadID - 1], &outputMutex[threadID - 1]);
         }
-        // printf("Thread %d moved on", threadID);
         myOutputOffset = outputOffset[threadID - 1] + outputLength[threadID - 1];
         pthread_mutex_unlock(&outputMutex[threadID - 1]);
 
@@ -382,12 +378,10 @@ void* encodeBatch(void* arg) {
 
     if(threadID != numThreads - 1) {
         pthread_mutex_lock(&outputMutex[threadID]);
-        // printf("Thread %d signalled to %d\n", threadID, threadID + 1);
         pthread_cond_signal(&outputCond[threadID]);
         pthread_mutex_unlock(&outputMutex[threadID]);
     }
 
-    // printf("Thread %d: offset %d, length %d\n", threadID, myOutputOffset, myOutputLength);
     
     int lockBuffer = 0;
     int firstElem = myOutputOffset / 32;
@@ -449,11 +443,6 @@ int main(int argc, char* argv[]) {
         pthread_join(threads[i], NULL);
     }
 
-    // ------- DEBUG
-    // for(int i = 0; i < 256; i++)
-    //     if(charFreq[i] > 0)
-    //         printf("%c (%u / %d): %d\n", i, i, i, charFreq[i]);
-
     // construct huffman tree
     HuffmanNode* root = huffman(charFreq);
 
@@ -462,16 +451,6 @@ int main(int argc, char* argv[]) {
         codeTable[i].codeLen = -1;
     }
     populateCodeTable(codeTable, root);
-
-    // ------- DEBUG
-    // for(int i = 0; i < 256; i++)
-    //     if(codeTable[i].codeLen > 0) {
-    //         printf("%c: ", i);
-    //         printCode(codeTable[i]);
-    //     }
-
-    //debug 
-    // printf("INPUT SIZE: %d bytes\n", inputFileSize);
 
     // map output file
     int outputFileSize = 72 + 32 * numThreads;
@@ -482,7 +461,6 @@ int main(int argc, char* argv[]) {
         outputFileSize += charFreq[i] * codeTable[i].codeLen;
     }
     outputFileSize = ceil((double) outputFileSize / 32) * sizeof(uint32_t);
-    // printf("OUTPUT SIZE: %d bytes\n", outputFileSize);
     int out_perm = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
     int out_fd = open(outfilename, O_CREAT | O_RDWR, out_perm);
     ftruncate(out_fd, outputFileSize);
@@ -492,7 +470,6 @@ int main(int argc, char* argv[]) {
     // write encoding scheme as header to output file
     int bitOffset = 0;
     encodeHeader(fout, &bitOffset, inputFileSize, codeTable);
-    // printf("HEADER ENCODED\n");
 
     // encode file contents
     outputOffset = (int*) malloc(sizeof(int) * numThreads);
@@ -509,7 +486,6 @@ int main(int argc, char* argv[]) {
 
     for(int i = 0; i < numThreads; i++) {
         pthread_create(&threads[i], &threadAttr, encodeBatch, &threadIDList[i]);
-        // encodeFile(fout, &bitOffset, fin, inputFileSize, codeTable);
     }
     for(int i = 0; i < numThreads; i++) {
         pthread_join(threads[i], NULL);
@@ -518,7 +494,6 @@ int main(int argc, char* argv[]) {
     // add thread offset values to header
     for(int i = 0; i < numThreads; i++) {
         fout[2 + i] = (uint32_t) outputOffset[i];
-        // printf("Thread %d: offset %d\n", i, outputOffset[i]);
     }
 
     // close file mappings

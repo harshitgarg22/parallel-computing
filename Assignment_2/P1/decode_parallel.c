@@ -132,17 +132,13 @@ uint32_t readBitsFromBuffer(uint32_t* buffer, int* offset, int length) {
 
 void decodeHeader(int* offset, SymbolCode codeTable[256]) {
     numThreads = readBitsFromBuffer(fin, offset, 32);
-    // printf("%d threads detected...\n", numThreads);
     threadIDList = (int*) malloc(sizeof(int) * numThreads);
     inputOffset = (int*) malloc(sizeof(int) * numThreads);
     for(int i = 0; i < numThreads; i++) {
         threadIDList[i] = i;
         inputOffset[i] = readBitsFromBuffer(fin, offset, 32);
-        // printf("Thread %d: offset %d\n", i, inputOffset[i]);
-
     }
     uint32_t charCount = readBitsFromBuffer(fin, offset, 8);
-    // printf("%u chars\n", charCount);
     for(int i = 0; i < charCount; i++) {
         uint32_t c = readBitsFromBuffer(fin, offset, 8);
         codeTable[c].codeLen = (int) readBitsFromBuffer(fin, offset, 8);
@@ -198,7 +194,6 @@ void* decodeBatch(void* arg) {
     int offset = inputOffset[threadID];
     for(int i = 0; i < batchSize; i++) {
         fout[batchOffset + i] = readCharCodeFromBuffer(fin, &offset);
-        // printf("[%d / %d]: %c (%u), %d\n", batchOffset + i+1, outputFileSize, fout[batchOffset + i], fout[batchOffset + i], offset);
     }
 
     pthread_exit(0);
@@ -224,13 +219,11 @@ int main(int argc, char* argv[]) {
     // map input and output files
     int in_fd = open(filename, O_RDONLY);
     int inputFileSize = lseek(in_fd, 0, SEEK_END);
-    // printf("INPUT SIZE: %d\n", inputFileSize);
     lseek(in_fd, 0, SEEK_SET);
     fin = (uint32_t*) mmap(NULL, inputFileSize, PROT_READ, MAP_PRIVATE, in_fd, 0);
 
     int bitOffset = 0;
     outputFileSize = readBitsFromBuffer(fin, &bitOffset, 32);
-    // printf("OUTPUT SIZE: %d\n", outputFileSize);
     int out_perm = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
     int out_fd = open(outfilename, O_CREAT | O_RDWR, out_perm);
     ftruncate(out_fd, outputFileSize);
@@ -248,13 +241,6 @@ int main(int argc, char* argv[]) {
     pthread_attr_t threadAttr;
     pthread_attr_init(&threadAttr);
 
-    // ------- DEBUG
-    // for(int i = 0; i < 256; i++)
-    //     if(codeTable[i].codeLen > 0) {
-    //         printf("%c: ", i);
-    //         printCode(codeTable[i]);
-    //     }
-
     // reconstruct huffman tree
     root = reconstructHuffmanTree(codeTable);
 
@@ -265,7 +251,6 @@ int main(int argc, char* argv[]) {
     for(int i = 0; i < numThreads; i++) {
         pthread_join(threads[i], NULL);
     }
-    // decodeFile(fout, &bitOffset, fin, outputFileSize, root);
 
     // close file mappings
     munmap(fin, inputFileSize);
