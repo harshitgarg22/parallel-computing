@@ -6,7 +6,8 @@ Run using
     ./decode_parallel <input encoded file> <output ASCII file> 
 
 Test using 
-    make test file=<input file name> threads=<number of threads>
-
+    make test [file=<input file name>] [threads=<number of threads>]
+              default: input10.txt     default: 1
+              
     Encodes given file using given number of threads, decodes the resulting file.
     Compares output file with the original one (using diff) and removes encoded and decoded files.
