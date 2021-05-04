@@ -6,7 +6,7 @@ run:
 
 rerun:
 	mpicc search_parallel.c -o search_parallel.out
-	mpiexec -np 4 --oversubscribe ./search_parallel.out 
+	mpiexec -np 4 --oversubscribe ./search_parallel.out --mca opal_warn_on_missing_libcuda 0
 
 debug:
 	mpicc search_parallel.c -o search_parallel.out
